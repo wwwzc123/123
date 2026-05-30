@@ -71,6 +71,25 @@ body {
   font-weight: bold;
   transition: color 0.5s;
 }
+.toggle-btn {
+  border: none;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  outline: none;
+  letter-spacing: 2px;
+}
+.toggle-btn.on {
+  background: #00c853;
+  color: #000;
+}
+.toggle-btn.off {
+  background: #555;
+  color: #999;
+}
 .game-over-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -135,6 +154,10 @@ body {
       <h3>消除行数</h3>
       <div class="score-value" id="lines">0</div>
     </div>
+    <div class="panel-box">
+      <h3>背景变色</h3>
+      <button id="bgToggleBtn" class="toggle-btn on">ON</button>
+    </div>
     <div class="panel-box controls">
       <span>← →</span> 移动<br>
       <span>↓</span> 软降<br>
@@ -159,13 +182,8 @@ const ROWS = 20;
 const BLOCK_SIZE = 30;
 const COLORS = [
   null,
-  '#00f0f0', // I - cyan
-  '#0000f0', // J - blue
-  '#f0a000', // L - orange
-  '#f0f000', // O - yellow
-  '#00f000', // S - green
-  '#a000f0', // T - purple
-  '#f00000', // Z - red
+  '#00f0f0', '#0000f0', '#f0a000', '#f0f000',
+  '#00f000', '#a000f0', '#f00000',
 ];
 
 const SHAPES = {
@@ -195,6 +213,7 @@ const levelEl = document.getElementById('level');
 const linesEl = document.getElementById('lines');
 const overlay = document.getElementById('gameOverOverlay');
 const finalScoreEl = document.getElementById('finalScore');
+const bgToggleBtn = document.getElementById('bgToggleBtn');
 
 let board = [];
 let score = 0;
@@ -209,6 +228,7 @@ let lastDrop = 0;
 let animationId = null;
 let bgHue = 240;
 let bgLastUpdate = 0;
+let bgColorEnabled = true;
 
 class Piece {
   constructor(name) {
@@ -218,7 +238,6 @@ class Piece {
     this.x = Math.floor((COLS - this.matrix[0].length) / 2);
     this.y = 0;
   }
-
   rotate() {
     const n = this.matrix.length;
     const rotated = Array.from({length: n}, () => Array(n).fill(0));
@@ -227,12 +246,10 @@ class Piece {
         rotated[c][n - 1 - r] = this.matrix[r][c];
     const kicks = [{x: 0, y: 0}, {x: -1, y: 0}, {x: 1, y: 0}, {x: -2, y: 0}, {x: 2, y: 0}, {x: 0, y: -1}];
     for (const kick of kicks) {
-      const nx = this.x + kick.x;
-      const ny = this.y + kick.y;
-      if (!collision(rotated, nx, ny)) {
+      if (!collision(rotated, this.x + kick.x, this.y + kick.y)) {
         this.matrix = rotated;
-        this.x = nx;
-        this.y = ny;
+        this.x += kick.x;
+        this.y += kick.y;
         return;
       }
     }
@@ -240,8 +257,7 @@ class Piece {
 }
 
 function randomPiece() {
-  const name = PIECE_NAMES[Math.floor(Math.random() * PIECE_NAMES.length)];
-  return new Piece(name);
+  return new Piece(PIECE_NAMES[Math.floor(Math.random() * PIECE_NAMES.length)]);
 }
 
 function initBoard() {
@@ -262,7 +278,7 @@ function collision(matrix, px, py) {
 }
 
 function lockPiece() {
-  const {matrix, x, y, color} = currentPiece;
+  const {matrix, x, y} = currentPiece;
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
       if (!matrix[r][c]) continue;
@@ -292,8 +308,7 @@ function clearLines() {
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(50, 1000 - (level - 1) * 80);
     updateDisplay();
-    // 每次消除行加速色相变化
-    bgHue = (bgHue + 15 * cleared) % 360;
+    if (bgColorEnabled) bgHue = (bgHue + 15 * cleared) % 360;
   }
 }
 
@@ -314,46 +329,30 @@ function triggerGameOver() {
 
 function drawBoard() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Grid lines
   ctx.strokeStyle = '#1a1a2e';
   ctx.lineWidth = 0.5;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
       ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    }
-  }
-  // Board
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (board[r][c]) {
-        drawBlock(ctx, c, r, COLORS[board[r][c]]);
-      }
-    }
-  }
-  // Current piece
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (board[r][c]) drawBlock(ctx, c, r, COLORS[board[r][c]]);
   if (currentPiece && !gameOver) {
     const {matrix, x, y, color} = currentPiece;
-    for (let r = 0; r < matrix.length; r++) {
-      for (let c = 0; c < matrix[r].length; c++) {
-        if (matrix[r][c]) {
-          drawBlock(ctx, x + c, y + r, color);
-        }
-      }
-    }
-    // Ghost piece
+    for (let r = 0; r < matrix.length; r++)
+      for (let c = 0; c < matrix[r].length; c++)
+        if (matrix[r][c]) drawBlock(ctx, x + c, y + r, color);
     let gy = y;
     while (!collision(matrix, x, gy + 1)) gy++;
     if (gy !== y) {
-      for (let r = 0; r < matrix.length; r++) {
-        for (let c = 0; c < matrix[r].length; c++) {
+      for (let r = 0; r < matrix.length; r++)
+        for (let c = 0; c < matrix[r].length; c++)
           if (matrix[r][c]) {
             ctx.fillStyle = 'rgba(255,255,255,0.15)';
             ctx.fillRect((x + c) * BLOCK_SIZE, (gy + r) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
             ctx.strokeStyle = 'rgba(255,255,255,0.3)';
             ctx.strokeRect((x + c) * BLOCK_SIZE, (gy + r) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
           }
-        }
-      }
     }
   }
 }
@@ -375,15 +374,11 @@ function drawNext() {
   nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
   if (!nextPiece) return;
   const {matrix, color} = nextPiece;
-  const offsetX = Math.floor((4 - matrix[0].length) / 2);
-  const offsetY = Math.floor((4 - matrix.length) / 2);
-  for (let r = 0; r < matrix.length; r++) {
-    for (let c = 0; c < matrix[r].length; c++) {
-      if (matrix[r][c]) {
-        drawBlock(nextCtx, offsetX + c, offsetY + r, color);
-      }
-    }
-  }
+  const ox = Math.floor((4 - matrix[0].length) / 2);
+  const oy = Math.floor((4 - matrix.length) / 2);
+  for (let r = 0; r < matrix.length; r++)
+    for (let c = 0; c < matrix[r].length; c++)
+      if (matrix[r][c]) drawBlock(nextCtx, ox + c, oy + r, color);
 }
 
 function moveDown() {
@@ -408,7 +403,6 @@ function moveLeft() {
   if (!collision(currentPiece.matrix, currentPiece.x - 1, currentPiece.y))
     currentPiece.x--;
 }
-
 function moveRight() {
   if (!collision(currentPiece.matrix, currentPiece.x + 1, currentPiece.y))
     currentPiece.x++;
@@ -420,33 +414,60 @@ function updateDisplay() {
   linesEl.textContent = lines;
 }
 
-// HSL -> 深色背景: 低明度 高饱和度
 function applyBackground(hue) {
-  const bgS = 55;
-  const bgL = 13;
-  const panelS = 40;
-  const panelL = 11;
-  const accentHue = (hue + 160) % 360;
-
-  document.body.style.background = `hsl(${hue}, ${bgS}%, ${bgL}%)`;
-
-  const panelBg = `hsl(${hue}, ${panelS}%, ${panelL}%)`;
-  const panelBorder = `hsl(${hue}, 50%, 18%)`;
+  if (!bgColorEnabled) return;
+  document.body.style.background = `hsl(${hue}, 55%, 13%)`;
+  const pb = `hsl(${hue}, 40%, 11%)`;
+  const pbr = `hsl(${hue}, 50%, 18%)`;
   document.querySelectorAll('.panel-box').forEach(el => {
-    el.style.background = panelBg;
-    el.style.borderColor = panelBorder;
+    el.style.background = pb;
+    el.style.borderColor = pbr;
   });
-
-  const gameBg = `hsl(${hue}, 30%, 6%)`;
-  const gameBorder = `hsl(${hue}, 50%, 18%)`;
-  const gameOverBg = `hsl(${hue}, 30%, 10%)`;
-
-  canvas.style.background = gameBg;
-  canvas.style.borderColor = gameBorder;
-  nextCanvas.style.background = gameBg;
-
-  document.querySelector('.game-over-box').style.background = gameOverBg;
+  const gb = `hsl(${hue}, 30%, 6%)`;
+  canvas.style.background = gb;
+  canvas.style.borderColor = pbr;
+  nextCanvas.style.background = gb;
+  document.querySelector('.game-over-box').style.background = `hsl(${hue}, 30%, 10%)`;
 }
+
+function resetBackground() {
+  const defaults = {
+    body: '#1a1a2e',
+    panel: '#16213e',
+    panelBorder: '#0f3460',
+    canvasBg: '#0a0a1a',
+    gameOverBg: '#16213e',
+  };
+  document.body.style.background = defaults.body;
+  document.querySelectorAll('.panel-box').forEach(el => {
+    el.style.background = defaults.panel;
+    el.style.borderColor = defaults.panelBorder;
+  });
+  canvas.style.background = defaults.canvasBg;
+  canvas.style.borderColor = defaults.panelBorder;
+  nextCanvas.style.background = defaults.canvasBg;
+  document.querySelector('.game-over-box').style.background = defaults.gameOverBg;
+}
+
+function updateToggleButton() {
+  if (bgColorEnabled) {
+    bgToggleBtn.textContent = 'ON';
+    bgToggleBtn.className = 'toggle-btn on';
+  } else {
+    bgToggleBtn.textContent = 'OFF';
+    bgToggleBtn.className = 'toggle-btn off';
+  }
+}
+
+bgToggleBtn.addEventListener('click', () => {
+  bgColorEnabled = !bgColorEnabled;
+  updateToggleButton();
+  if (bgColorEnabled) {
+    applyBackground(bgHue);
+  } else {
+    resetBackground();
+  }
+});
 
 function gameLoop(timestamp) {
   if (gameOver || paused) {
@@ -459,8 +480,7 @@ function gameLoop(timestamp) {
     lastDrop = timestamp;
     updateDisplay();
   }
-  // 背景色相缓慢更新 (每30ms一次，保持流畅)
-  if (timestamp - bgLastUpdate >= 30) {
+  if (bgColorEnabled && timestamp - bgLastUpdate >= 30) {
     bgHue = (bgHue + 0.15) % 360;
     applyBackground(bgHue);
     bgLastUpdate = timestamp;
@@ -472,17 +492,12 @@ function gameLoop(timestamp) {
 
 function startGame() {
   initBoard();
-  score = 0;
-  level = 1;
-  lines = 0;
-  gameOver = false;
-  paused = false;
-  dropInterval = 1000;
-  lastDrop = 0;
-  bgHue = 240;
-  bgLastUpdate = 0;
+  score = 0; level = 1; lines = 0;
+  gameOver = false; paused = false;
+  dropInterval = 1000; lastDrop = 0;
+  bgHue = 240; bgLastUpdate = 0;
   updateDisplay();
-  applyBackground(bgHue);
+  if (bgColorEnabled) applyBackground(bgHue);
   nextPiece = randomPiece();
   spawnPiece();
   overlay.classList.add('hidden');
