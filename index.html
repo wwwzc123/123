@@ -9,84 +9,95 @@
 body {
   background: #1a1a2e;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  gap: 24px;
   font-family: 'Segoe UI', Arial, sans-serif;
   overflow: hidden;
-  transition: background 0.5s;
+  transition: background 0.6s;
 }
-.game-container {
+.top-row {
   display: flex;
-  gap: 50px;
+  gap: 40px;
   align-items: flex-start;
-}
-.side-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-width: 180px;
-}
-.panel-box {
-  background: #16213e;
-  border: 2px solid #0f3460;
-  border-radius: 10px;
-  padding: 18px 20px;
-  text-align: center;
-  transition: background 0.5s, border-color 0.5s;
-}
-.panel-box h3 {
-  color: #e94560;
-  font-size: 13px;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  transition: color 0.5s;
 }
 #gameCanvas {
   border: 2px solid #0f3460;
   border-radius: 6px;
   background: #0a0a1a;
-  transition: border-color 0.5s, background 0.5s;
+  transition: border-color 0.6s, background 0.6s;
+  flex-shrink: 0;
+}
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 150px;
+}
+.bottom-row {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+.panel-box {
+  background: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 10px;
+  padding: 16px 24px;
+  text-align: center;
+  transition: background 0.6s, border-color 0.6s;
+  flex: 1;
+  min-width: 110px;
+}
+.panel-box h3 {
+  color: #e94560;
+  font-size: 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: color 0.6s;
 }
 #nextCanvas {
   background: #0a0a1a;
   border-radius: 4px;
   display: block;
   margin: 0 auto;
-  transition: background 0.5s;
+  transition: background 0.6s;
 }
 .score-value {
   color: #fff;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: bold;
-  transition: color 0.5s;
+  transition: color 0.6s;
 }
 .controls {
   color: #aaa;
   font-size: 13px;
-  line-height: 2.2;
+  line-height: 2;
+  min-width: 130px;
 }
 .controls span {
   color: #e94560;
   font-weight: bold;
-  transition: color 0.5s;
+  transition: color 0.6s;
 }
 .toggle-btn {
   border: none;
-  padding: 10px 28px;
-  font-size: 14px;
+  padding: 8px 24px;
+  font-size: 13px;
   font-weight: bold;
-  border-radius: 22px;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s;
   outline: none;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
 }
 .toggle-btn.on {
   background: #00c853;
   color: #000;
-  box-shadow: 0 0 12px rgba(0,200,83,0.4);
+  box-shadow: 0 0 10px rgba(0,200,83,0.4);
 }
 .toggle-btn.off {
   background: #555;
@@ -109,13 +120,13 @@ body {
   padding: 50px 60px;
   text-align: center;
   color: #fff;
-  transition: background 0.5s;
+  transition: background 0.6s;
 }
 .game-over-box h2 {
   color: #e94560;
   font-size: 32px;
   margin-bottom: 15px;
-  transition: color 0.5s;
+  transition: color 0.6s;
 }
 .game-over-box p {
   font-size: 18px;
@@ -137,36 +148,39 @@ body {
 </head>
 <body>
 
-<div class="game-container">
+<div class="top-row">
   <canvas id="gameCanvas"></canvas>
   <div class="side-panel">
     <div class="panel-box">
       <h3>下一个</h3>
       <canvas id="nextCanvas"></canvas>
     </div>
-    <div class="panel-box">
-      <h3>分数</h3>
-      <div class="score-value" id="score">0</div>
-    </div>
-    <div class="panel-box">
-      <h3>等级</h3>
-      <div class="score-value" id="level">1</div>
-    </div>
-    <div class="panel-box">
-      <h3>消除行数</h3>
-      <div class="score-value" id="lines">0</div>
-    </div>
-    <div class="panel-box">
-      <h3>背景变色</h3>
-      <button id="bgToggleBtn" class="toggle-btn on">ON</button>
-    </div>
-    <div class="panel-box controls">
-      <span>← →</span> 移动<br>
-      <span>↓</span> 软降<br>
-      <span>↑</span> 旋转<br>
-      <span>空格</span> 硬降<br>
-      <span>P</span> 暂停
-    </div>
+  </div>
+</div>
+
+<div class="bottom-row">
+  <div class="panel-box">
+    <h3>分数</h3>
+    <div class="score-value" id="score">0</div>
+  </div>
+  <div class="panel-box">
+    <h3>等级</h3>
+    <div class="score-value" id="level">1</div>
+  </div>
+  <div class="panel-box">
+    <h3>消除行数</h3>
+    <div class="score-value" id="lines">0</div>
+  </div>
+  <div class="panel-box">
+    <h3>背景变色</h3>
+    <button id="bgToggleBtn" class="toggle-btn on">ON</button>
+  </div>
+  <div class="panel-box controls">
+    <span>← →</span> 移动 &nbsp;
+    <span>↓</span> 软降 &nbsp;
+    <span>↑</span> 旋转<br>
+    <span>空格</span> 硬降 &nbsp;
+    <span>P</span> 暂停
   </div>
 </div>
 
@@ -310,7 +324,7 @@ function clearLines() {
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(50, 1000 - (level - 1) * 80);
     updateDisplay();
-    if (bgColorEnabled) bgHue = (bgHue + 30 * cleared) % 360;
+    if (bgColorEnabled) bgHue = (bgHue + 45 * cleared) % 360;
   }
 }
 
@@ -416,27 +430,28 @@ function updateDisplay() {
   linesEl.textContent = lines;
 }
 
-// 背景色 — 色相+饱和度双双变化，颜色更丰富
+// 背景色 — 饱和度+明度大幅波动，颜色变化更明显
 function applyBackground(hue) {
   if (!bgColorEnabled) return;
-  // 饱和度随色相正弦波动 (45~80%)，明度也微调 (10~16%)
-  const sat = 50 + Math.sin(hue * Math.PI / 180) * 25;
-  const lit = 12 + Math.sin(hue * Math.PI / 90) * 3;
+  // 饱和度在 35%~85% 之间大幅波动
+  const sat = 45 + Math.sin(hue * Math.PI / 120) * 35 + Math.cos(hue * Math.PI / 53) * 15;
+  // 明度在 8%~18% 之间波动
+  const lit = 11 + Math.sin(hue * Math.PI / 80) * 6 + Math.cos(hue * Math.PI / 37) * 3;
   document.body.style.background = `hsl(${hue}, ${sat}%, ${lit}%)`;
 
-  const pb = `hsl(${hue}, ${sat * 0.7}%, ${lit * 0.8}%)`;
-  const pbr = `hsl(${hue}, ${sat * 0.9}%, ${lit * 1.4}%)`;
+  const pb = `hsl(${hue}, ${sat * 0.75}%, ${lit * 0.85}%)`;
+  const pbr = `hsl(${hue}, ${sat * 0.9}%, ${lit * 1.5}%)`;
   document.querySelectorAll('.panel-box').forEach(el => {
     el.style.background = pb;
     el.style.borderColor = pbr;
   });
 
-  const gb = `hsl(${hue}, ${sat * 0.5}%, ${lit * 0.45}%)`;
+  const gb = `hsl(${hue}, ${sat * 0.55}%, ${lit * 0.5}%)`;
   canvas.style.background = gb;
   canvas.style.borderColor = pbr;
   nextCanvas.style.background = gb;
 
-  document.querySelector('.game-over-box').style.background = `hsl(${hue}, ${sat * 0.5}%, ${lit * 0.75}%)`;
+  document.querySelector('.game-over-box').style.background = `hsl(${hue}, ${sat * 0.55}%, ${lit * 0.8}%)`;
 }
 
 function resetBackground() {
@@ -489,8 +504,8 @@ function gameLoop(timestamp) {
     lastDrop = timestamp;
     updateDisplay();
   }
-  if (bgColorEnabled && timestamp - bgLastUpdate >= 25) {
-    bgHue = (bgHue + 0.25) % 360;
+  if (bgColorEnabled && timestamp - bgLastUpdate >= 20) {
+    bgHue = (bgHue + 0.35) % 360;
     applyBackground(bgHue);
     bgLastUpdate = timestamp;
   }
